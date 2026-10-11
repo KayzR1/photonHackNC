@@ -1,7 +1,8 @@
 import DatabaseConstructor, { type Database } from "better-sqlite3";
+import { envStr } from "./env.js";
 import type { CaseStatus, CourtMode } from "./types.js";
 
-const DB_PATH = process.env.HUNG_JURY_DB_PATH ?? "./hung-jury.db";
+const DB_PATH = envStr("HUNG_JURY_DB_PATH", "./hung-jury.db");
 
 export const db: Database = new DatabaseConstructor(DB_PATH);
 db.pragma("journal_mode = WAL");

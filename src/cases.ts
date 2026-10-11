@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { Message, Space } from "spectrum-ts";
 import { extractText, getReaction, getReplyTarget } from "./content-utils.js";
 import { getRecentPrecedent, insertCase, recordVerdict, updateCaseMode, updateCaseStatus } from "./db.js";
+import { envNumber } from "./env.js";
 import {
   JOIN_EMOJI,
   NO_EMOJI,
@@ -18,8 +19,8 @@ import {
 import { checkRecusal, generateCrossExamination, generateVerdict } from "./judge.js";
 import type { CaseStatus, CourtMode, PartyKey, VerdictResult } from "./types.js";
 
-const NO_SHOW_TIMEOUT_MS = Number(process.env.HUNG_JURY_TIMEOUT_MS ?? 90_000);
-const JURY_VOTE_WINDOW_MS = Number(process.env.HUNG_JURY_VOTE_WINDOW_MS ?? 90_000);
+const NO_SHOW_TIMEOUT_MS = envNumber("HUNG_JURY_TIMEOUT_MS", 90_000);
+const JURY_VOTE_WINDOW_MS = envNumber("HUNG_JURY_VOTE_WINDOW_MS", 90_000);
 const MODE_VOTE_TIMEOUT_MS = 60_000;
 const JOIN_WAIT_TIMEOUT_MS = 120_000;
 const APPEAL_WINDOW_MS = 60_000;

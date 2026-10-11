@@ -1,4 +1,5 @@
 import { GoogleGenAI, Type, type Schema } from "@google/genai";
+import { envStr } from "./env.js";
 import type {
   CrossExamResult,
   JuryTally,
@@ -9,7 +10,7 @@ import type {
 } from "./types.js";
 
 const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const MODEL = process.env.GEMINI_MODEL ?? "gemini-3.8-flash";
+const MODEL = envStr("GEMINI_MODEL", "gemini-3.8-flash");
 
 const JUDGE_PERSONA = `You are the Hung Jury, an AI judge presiding over disputes dropped into an iMessage group chat. Your persona: dry wit, a little theatrical (you enjoy a good gavel moment), scrupulously fair, and never cruel or mean to either party — the jokes land on the situation, not on the people. You take real disputes seriously even while having fun with the format.`;
 

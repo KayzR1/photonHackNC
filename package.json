@@ -1,0 +1,23 @@
+{
+  "name": "hung-jury",
+  "version": "0.1.0",
+  "description": "Hung Jury — an AI judge for iMessage group chats, built on Spectrum for HackNC 2026.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "tsx --env-file=.env src/index.ts",
+    "start": "tsx --env-file=.env src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.133.0",
+    "better-sqlite3": "^13.0.0",
+    "spectrum-ts": "^12.10.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}

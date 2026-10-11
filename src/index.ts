@@ -8,8 +8,8 @@ const projectSecret = process.env.SPECTRUM_PROJECT_SECRET;
 if (!projectId || !projectSecret) {
   throw new Error("SPECTRUM_PROJECT_ID and SPECTRUM_PROJECT_SECRET must be set — see .env.example.");
 }
-if (!process.env.ANTHROPIC_API_KEY) {
-  throw new Error("ANTHROPIC_API_KEY must be set — see .env.example.");
+if (!process.env.GEMINI_API_KEY) {
+  throw new Error("GEMINI_API_KEY must be set — see .env.example.");
 }
 
 const spectrum = await Spectrum({

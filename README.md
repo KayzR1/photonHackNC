@@ -18,7 +18,7 @@ conversation itself.
    ```
    SPECTRUM_PROJECT_ID=...
    SPECTRUM_PROJECT_SECRET=...
-   ANTHROPIC_API_KEY=...
+   GEMINI_API_KEY=...
    ```
    Get Spectrum credentials from https://app.photon.codes/dashboard — promo code
    `HACKWITHPHOTON` unlocks a free month of Pro. Confirm with the dashboard whether your
@@ -75,9 +75,9 @@ Along the way:
   messages/reactions to the case engine.
 - `src/cases.ts` — the case state machine (summon → mode vote → testimony →
   cross-examination → jury vote → verdict → closed) and its in-memory runtime state.
-- `src/judge.ts` — the three structured Claude calls (recusal check, cross-examination
-  questions, verdict), all forced to JSON via tool-use so the rest of the app never
-  parses free text.
+- `src/judge.ts` — the three structured Gemini calls (recusal check, cross-examination
+  questions, verdict), all forced to JSON via `responseSchema` so the rest of the app
+  never parses free text.
 - `src/imessage-features.ts` — thin wrappers around tapback prompts, threaded exhibit
   replies, and the gavel ("slam") effect.
 - `src/db.ts` — SQLite schema and queries for case + precedent storage.

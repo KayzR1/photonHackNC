@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { GoogleGenAI, Type, type Schema } from "@google/genai";
 import type {
   CrossExamResult,
   JuryTally,
@@ -8,8 +8,8 @@ import type {
   VerdictResult,
 } from "./types.js";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-5-5";
+const gemini = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const MODEL = process.env.GEMINI_MODEL ?? "gemini-3.8-flash";
 
 const JUDGE_PERSONA = `You are the Hung Jury, an AI judge presiding over disputes dropped into an iMessage group chat. Your persona: dry wit, a little theatrical (you enjoy a good gavel moment), scrupulously fair, and never cruel or mean to either party — the jokes land on the situation, not on the people. You take real disputes seriously even while having fun with the format.`;
 
@@ -58,32 +58,24 @@ const RECUSAL_DECLINE_MESSAGE =
 async function callStructured<T>(opts: {
   system: string;
   prompt: string;
-  toolName: string;
-  toolDescription: string;
-  inputSchema: Anthropic.Tool["input_schema"];
+  label: string;
+  schema: Schema;
 }): Promise<T> {
-  const response = await anthropic.messages.create({
+  const response = await gemini.models.generateContent({
     model: MODEL,
-    max_tokens: 1024,
-    system: opts.system,
-    messages: [{ role: "user", content: opts.prompt }],
-    tools: [
-      {
-        name: opts.toolName,
-        description: opts.toolDescription,
-        input_schema: opts.inputSchema,
-      },
-    ],
-    tool_choice: { type: "tool", name: opts.toolName },
+    contents: opts.prompt,
+    config: {
+      systemInstruction: opts.system,
+      responseMimeType: "application/json",
+      responseSchema: opts.schema,
+    },
   });
 
-  const toolUse = response.content.find(
-    (block): block is Anthropic.ToolUseBlock => block.type === "tool_use",
-  );
-  if (!toolUse) {
-    throw new Error(`Judge model did not return a ${opts.toolName} tool call`);
+  const text = response.text;
+  if (!text) {
+    throw new Error(`Judge model returned no ${opts.label} output`);
   }
-  return toolUse.input as T;
+  return JSON.parse(text) as T;
 }
 
 /**
@@ -102,17 +94,16 @@ export async function checkRecusal(disputeDescription: string): Promise<RecusalR
   return callStructured<RecusalResult>({
     system: JUDGE_PERSONA,
     prompt: `A dispute has been brought before the court. Here is everything said about it so far:\n\n"""\n${disputeDescription}\n"""\n\nDecide whether this is appropriate for an AI judge in a group chat to rule on for fun, or whether it actually involves money owed between the parties, physical safety, or a serious relationship/mental-health matter — in which case you should decline (recuse) rather than rule. When recusing, write a kind, brief, in-character reason that tells the parties to talk directly or seek real support. Do not be a killjoy about ordinary petty disputes (who left dishes in the sink, whose turn it is to pick the restaurant, a bad joke, etc.) — those are exactly what you're for.`,
-    toolName: "recusal_decision",
-    toolDescription: "Decide whether the judge should recuse from this case.",
-    inputSchema: {
-      type: "object",
+    label: "recusal_decision",
+    schema: {
+      type: Type.OBJECT,
       properties: {
         shouldRecuse: {
-          type: "boolean",
+          type: Type.BOOLEAN,
           description: "True if the judge should decline to rule on this dispute.",
         },
         reason: {
-          type: "string",
+          type: Type.STRING,
           description:
             "Required when shouldRecuse is true: a kind, in-character message explaining the recusal to the parties.",
         },
@@ -131,23 +122,22 @@ export async function generateCrossExamination(input: {
   return callStructured<CrossExamResult>({
     system: JUDGE_PERSONA,
     prompt: buildCrossExamPrompt(input),
-    toolName: "cross_examination_questions",
-    toolDescription: "Produce follow-up cross-examination questions for each party.",
-    inputSchema: {
-      type: "object",
+    label: "cross_examination_questions",
+    schema: {
+      type: Type.OBJECT,
       properties: {
         questionsForPartyA: {
-          type: "array",
-          items: { type: "string" },
-          minItems: 1,
-          maxItems: 2,
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
+          minItems: "1",
+          maxItems: "2",
           description: "1-2 sharp, fair follow-up questions for party A.",
         },
         questionsForPartyB: {
-          type: "array",
-          items: { type: "string" },
-          minItems: 1,
-          maxItems: 2,
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
+          minItems: "1",
+          maxItems: "2",
           description: "1-2 sharp, fair follow-up questions for party B.",
         },
       },
@@ -198,26 +188,25 @@ export async function generateVerdict(input: {
   return callStructured<VerdictResult>({
     system,
     prompt: buildVerdictPrompt(input),
-    toolName: "render_verdict",
-    toolDescription: "Render the court's structured verdict.",
-    inputSchema: {
-      type: "object",
+    label: "render_verdict",
+    schema: {
+      type: Type.OBJECT,
       properties: {
         ruling: {
-          type: "string",
+          type: Type.STRING,
           description: "A short holding — who, if anyone, is in the right. One or two sentences.",
         },
         reasoning: {
-          type: "string",
+          type: Type.STRING,
           description: "The court's reasoning for the ruling, in the judge's dry, theatrical voice.",
         },
         sentence: {
-          type: "string",
+          type: Type.STRING,
           description: "The concrete order: what the losing (or both) party must now do.",
         },
         citesPrecedent: {
-          type: "array",
-          items: { type: "string" },
+          type: Type.ARRAY,
+          items: { type: Type.STRING },
           description: "Titles of any earlier cases from the precedent list this ruling cites, if any.",
         },
       },

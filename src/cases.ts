@@ -103,6 +103,12 @@ export class CaseEngine {
   constructor(private readonly openDm: DmOpener) {}
 
   async handleMessage(space: Space, message: Message): Promise<void> {
+    if (process.env.HUNG_JURY_DEBUG) {
+      console.log(
+        `[debug] inbound platform=${message.platform} space=${space.id} direction=${message.direction} sender=${message.sender?.id} contentType=${(message.content as { type: string }).type}`,
+      );
+    }
+
     if (message.direction !== "inbound") return;
     const sender = message.sender;
     if (!sender || sender.kind === "agent") return;
@@ -114,6 +120,9 @@ export class CaseEngine {
     }
 
     const text = extractText(message.content);
+    if (process.env.HUNG_JURY_DEBUG) {
+      console.log(`[debug] extracted text=${JSON.stringify(text)} matchesTrigger=${matchesTrigger(text)}`);
+    }
     if (!text) return;
 
     const dmRoute = this.dmRoutesBySpaceId.get(space.id);
